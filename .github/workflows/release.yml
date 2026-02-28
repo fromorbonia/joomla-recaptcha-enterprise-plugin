@@ -35,6 +35,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add updates/ code/plugins/captcha/recaptcha_Enterprise.xml code/plugins/captcha/recaptcha_Enterprise/src/Plugin.php
+          git add updates/ code/plugins/captcha/recaptcha_enterprise/recaptcha_enterprise.xml code/plugins/captcha/recaptcha_enterprise/src/Plugin.php
           git diff --cached --quiet || git commit -m "Update build artifacts for ${{ github.event.release.tag_name }}"
           git push origin HEAD:main
