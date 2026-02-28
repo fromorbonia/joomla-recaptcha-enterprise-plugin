@@ -12,7 +12,7 @@ use Sharky\Joomla\PluginBuildScript\Script;
 		'recaptcha_enterprise',
 		'captcha',
 		'joomla-recaptcha-enterprise-plugin',
-		'SharkyKZ',
+		'FromOrbonia',
 		'Captcha - reCAPTCHA Enterprise',
 		'Google reCAPTCHA Enterprise plugin for Joomla!.',
 		'(6\.|5\.|4\.)',
@@ -33,6 +33,17 @@ use Sharky\Joomla\PluginBuildScript\Script;
 			file_put_contents($plugin, $code);
 
 			parent::build();
+
+			// The upstream library hardcodes "master" in changelogurl.
+			// Fix it to use "main" which is the actual default branch.
+			$updatesFile = $this->rootPath . '/updates/updates.xml';
+
+			if (is_file($updatesFile))
+			{
+				$xml = file_get_contents($updatesFile);
+				$xml = str_replace('/' . $this->repositoryName . '/master/', '/' . $this->repositoryName . '/main/', $xml);
+				file_put_contents($updatesFile, $xml);
+			}
 		}
 	}
 )->build();

@@ -5,7 +5,7 @@
 	<creationDate>2026-02-23</creationDate>
 	<copyright>(C) 2023 SharkyKZ</copyright>
 	<license>GPL-3.0-or-later</license>
-	<version>2.0.4</version>
+	<version>2.0.5</version>
 	<description>PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_XML_DESCRIPTION</description>
 	<namespace path="src">Sharky\Plugin\Captcha\RecaptchaEnterprise</namespace>
 	<install>
@@ -122,7 +122,7 @@
 					validate="number"
 					filter="uint"
 					min="0"
-					max="100000"
+					max="10000"
 					default="1000"
 					showon="enableLogging:1"
 				/>
