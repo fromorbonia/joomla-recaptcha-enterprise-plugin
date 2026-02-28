@@ -4,9 +4,37 @@
  */
 const captchaKey = Joomla.getOptions('plg_captcha_recaptcha_enterprise.siteKey', '');
 const triggerMethod = Joomla.getOptions('plg_captcha_recaptcha_enterprise.triggerMethod', 'focusin');
+const apiUrl = Joomla.getOptions('plg_captcha_recaptcha_enterprise.apiUrl', '');
 const actionSelector = 'input.plg-captcha-recaptcha-enterprise-action';
 const answerSelector = 'input.plg-captcha-recaptcha-enterprise-hidden';
 const getAction = form => findAction(form).replace(/[^a-z0-9]+/gi, '_');
+
+/**
+ * Lazy-loads the Google reCAPTCHA Enterprise script on first need.
+ * Returns a promise that resolves when grecaptcha.enterprise is ready.
+ */
+let apiLoadPromise = null;
+const ensureApi = function () {
+	if (apiLoadPromise) {
+		return apiLoadPromise;
+	}
+	apiLoadPromise = new Promise(function (resolve) {
+		if (typeof grecaptcha !== 'undefined' && grecaptcha.enterprise) {
+			grecaptcha.enterprise.ready(resolve);
+			return;
+		}
+		const script = document.createElement('script');
+		script.src = apiUrl;
+		script.defer = true;
+		script.referrerPolicy = 'no-referrer';
+		script.onload = function () {
+			grecaptcha.enterprise.ready(resolve);
+		};
+		document.head.appendChild(script);
+	});
+	return apiLoadPromise;
+};
+
 const findAction = function (form) {
 	if (form.hasAttribute('class') && form.getAttribute('class') !== '') {
 		let matchClass;
@@ -30,7 +58,7 @@ const findAction = function (form) {
 
 const handleSubmit = function (submitEvent) {
 	submitEvent.preventDefault();
-	grecaptcha.enterprise.ready(function () {
+	ensureApi().then(function () {
 		const actionElement = submitEvent.target.querySelector(actionSelector);
 		actionElement.value = getAction(submitEvent.target);
 		grecaptcha.enterprise.execute(captchaKey, {action: actionElement.value}).then(function (token) {
@@ -41,7 +69,7 @@ const handleSubmit = function (submitEvent) {
 }
 
 const handleFocus = function(focusInEvent) {
-	grecaptcha.enterprise.ready(function () {
+	ensureApi().then(function () {
 		const form = focusInEvent.target.form ?? focusInEvent.target.closest('input, textarea, select, button, fieldset').form;
 		const actionElement = form.querySelector(actionSelector);
 		actionElement.value = getAction(form);
@@ -55,7 +83,7 @@ const handleFocus = function(focusInEvent) {
 
 const handleIframeFocus = function(focusInEvent, addedNode) {
 	const form = addedNode.closest('input, textarea, select, button, fieldset').form;
-	grecaptcha.enterprise.ready(function () {
+	ensureApi().then(function () {
 		const actionElement = form.querySelector(actionSelector);
 		actionElement.value = getAction(form);
 		const answerElement = form.querySelector(answerSelector);
@@ -67,7 +95,7 @@ const handleIframeFocus = function(focusInEvent, addedNode) {
 }
 
 const handleLoad = function (element) {
-	grecaptcha.enterprise.ready(function () {
+	ensureApi().then(function () {
 		const actionElement = element.form.querySelector(actionSelector);
 		actionElement.value = getAction(element.form);
 		grecaptcha.enterprise.execute(captchaKey, { action: actionElement.value }).then(function (token) {
@@ -134,7 +162,7 @@ const initField = function (container) {
 };
 
 // Expose globally so onDisplay's inline script can call it.
-window.plgRecaptchaenterpriseInit = initField;
+window.plgRecaptchaEnterpriseInit = initField;
 
 // Initial scan for fields already in the DOM at page load.
 for (const element of document.querySelectorAll(answerSelector)) {

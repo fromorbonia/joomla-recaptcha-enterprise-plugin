@@ -168,20 +168,15 @@ final class Plugin implements PluginInterface
 
 		$document->addScriptOptions('plg_captcha_recaptcha_enterprise.siteKey', $siteKey);
 		$document->addScriptOptions('plg_captcha_recaptcha_enterprise.triggerMethod', $this->params->get('triggerMethod', 'focusin'));
-		$assetManager = $document->getWebAssetManager();
 
-		if (!$assetManager->assetExists('script', 'plg_captcha_recaptcha_enterprise.api.js'))
-		{
-			$languageTag = $this->app->getLanguage()->getTag();
-			$assetManager->registerAsset(
-				'script',
-				'plg_captcha_recaptcha_enterprise.api.js',
-				'https://www.google.com/recaptcha/enterprise.js?hl=' . $languageTag . '&render=' . $siteKey,
-				[],
-				['defer' => true, 'referrerpolicy' => 'no-referrer'],
-				['core']
-			);
-		}
+		// Pass API URL so main.js can lazy-load it on first user interaction.
+		$languageTag = $this->app->getLanguage()->getTag();
+		$document->addScriptOptions(
+			'plg_captcha_recaptcha_enterprise.apiUrl',
+			'https://www.google.com/recaptcha/enterprise.js?hl=' . $languageTag . '&render=' . $siteKey
+		);
+
+		$assetManager = $document->getWebAssetManager();
 
 		if (!$assetManager->assetExists('script', 'plg_captcha_recaptcha_enterprise.main.js'))
 		{
@@ -191,11 +186,10 @@ final class Plugin implements PluginInterface
 				'plg_captcha_recaptcha_enterprise/main.js',
 				['version' => self::SCRIPT_HASH],
 				['type' => 'module'],
-				['plg_captcha_recaptcha_enterprise.api.js', 'core']
+				['core']
 			);
 		}
 
-		$assetManager->useAsset('script', 'plg_captcha_recaptcha_enterprise.api.js');
 		$assetManager->useAsset('script', 'plg_captcha_recaptcha_enterprise.main.js');
 
 		return true;
@@ -252,7 +246,7 @@ final class Plugin implements PluginInterface
 
 		// Trigger token initialisation via main.js's exposed function.
 		// Handles popups and dynamically loaded forms where main.js's page-load scan already ran.
-		$html .= '<script>window.plgRecaptchaEnterpriseInit&&window.plgRecaptchaEnterpriseInit(document.currentScript.parentNode);</script>';
+		$html .= '<script>window.plgRecaptchaEnterpriseInit&&window.plgRecaptchaEnterpriseInit(document.currentScript.parentNode);</script>';;
 
 		if (\JDEBUG) {Log::add('html-rendered', Log::INFO, 'plg_reacaptcha_enterprise_on_display'); }
 		
