@@ -22,6 +22,7 @@ use Joomla\Http\HttpFactory;
 use Joomla\Registry\Registry;
 use Joomla\Utilities\ArrayHelper;
 use Joomla\CMS\Log\Log;
+use Joomla\Database\DatabaseInterface;
 
 /**
  * Google reCAPTCHA Enterprise plugin
@@ -52,7 +53,7 @@ final class Plugin implements PluginInterface
 	 * @var	 string
 	 * @since  1.0.0
 	 */
-	private const SCRIPT_HASH = '9c85b3aa';
+	private const SCRIPT_HASH = '69641ef1';
 
 	/**
 	 * Application instance.
@@ -140,12 +141,12 @@ final class Plugin implements PluginInterface
 	 */
 	public function onInit($id = null)
 	{
-		 Log::add('start', Log::INFO, 'plg_reacaptcha_v3_on_init'); 
+		if (\JDEBUG) {Log::add('start', Log::INFO, 'plg_reacaptcha_v3_on_init'); }
 
 		if ($this->shouldShowCaptcha())
 		{
-			Log::add('show', Log::INFO, 'plg_reacaptcha_v3_on_init'); 
-	return $this->getCaptcha()->initialise($id);
+			if (\JDEBUG) { Log::add('show', Log::INFO, 'plg_reacaptcha_v3_on_init'); }
+			return $this->getCaptcha()->initialise($id);
 		}
 
 		if (!$siteKey = $this->params->get('siteKey'))
@@ -213,8 +214,11 @@ final class Plugin implements PluginInterface
 	 */
 	public function onDisplay($name = null, $id = null, $class = '')
 	{
+		if (\JDEBUG) {Log::add('start', Log::INFO, 'plg_reacaptcha_v3_on_display'); }
+
 		if ($this->shouldShowCaptcha())
 		{
+			if (\JDEBUG) {Log::add('show', Log::INFO, 'plg_reacaptcha_v3_on_display'); }
 			return $this->getCaptcha()->display($name, $id, $class);
 		}
 
@@ -246,7 +250,12 @@ final class Plugin implements PluginInterface
 		$html .= '<input type="hidden" name="plg_captcha_recaptcha_v3_action" class="plg-captcha-recaptcha-v3-action">';
 		$html .= $this->render('noscript');
 
+		// Trigger token initialisation via main.js's exposed function.
+		// Handles popups and dynamically loaded forms where main.js's page-load scan already ran.
+		$html .= '<script>window.plgRecaptchaV3Init&&window.plgRecaptchaV3Init(document.currentScript.parentNode);</script>';
 
+		if (\JDEBUG) {Log::add('html-rendered', Log::INFO, 'plg_reacaptcha_v3_on_display'); }
+		
 		return $html;
 	}
 
@@ -284,8 +293,18 @@ final class Plugin implements PluginInterface
 	 */
 	public function onCheckAnswer($code = null)
 	{
+		if (\JDEBUG) {Log::add('start', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+
+		// Capture form name and email fields when available (e.g. registration, contact forms).
+		$jform = $this->app instanceof CMSWebApplicationInterface
+			? $this->app->getInput()->get('jform', [], 'ARRAY')
+			: [];
+		$formName = trim(($jform['name'] ?? '') . ' ' . ($jform['lastname'] ?? ''));
+		$formEmail = $jform['email1'] ?? $jform['email'] ?? '';
+
 		if ($this->shouldShowCaptcha())
 		{
+			if (\JDEBUG) {Log::add('show', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
 			if ($answer = $this->getCaptcha()->checkAnswer($code))
 			{
 				$this->setShouldShowCaptcha(false);
@@ -300,6 +319,8 @@ final class Plugin implements PluginInterface
 		if ($code === null || $code === '')
 		{
 			// No answer provided, form was manipulated.
+			if (\JDEBUG) {Log::add('result=fail, name=' . $formName . ', email=' . $formEmail . ', reason=Empty response - form may have been manipulated', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+			$this->logToDatabase('', null, null, 'fail', '', 'Empty response - form may have been manipulated', $formName, $formEmail);
 			throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_V3_ERROR_EMPTY_RESPONSE'));
 		}
 
@@ -308,6 +329,8 @@ final class Plugin implements PluginInterface
 
 		if (!$apiKey || !$projectId)
 		{
+			if (\JDEBUG) {Log::add('result=error, name=' . $formName . ', email=' . $formEmail . ', reason=Missing API key or project ID', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+			$this->logToDatabase('', null, null, 'error', '', 'Missing API key or project ID', $formName, $formEmail);
 			throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_V3_NO_API_KEY'));
 		}
 
@@ -317,12 +340,14 @@ final class Plugin implements PluginInterface
 		}
 		catch (\RuntimeException $exception)
 		{
-			if (\JDEBUG)
-			{
-				throw $exception;
-			}
+
 
 			// No HTTP transports supported.
+			$this->logToDatabase('', null, null, 'error', '', 'No HTTP transports available', $formName, $formEmail);
+			if (\JDEBUG) {
+				Log::add('result=error, name=' . $formName . ', email=' . $formEmail . ', reason=No HTTP transports available', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); 
+				throw $exception;
+			}
 			return !$this->params->get('strictMode');
 		}
 
@@ -334,6 +359,8 @@ final class Plugin implements PluginInterface
 			],
 		]);
 
+		$expectedActionForLog = $this->app->getInput()->get('plg_captcha_recaptcha_v3_action', '', 'RAW');
+
 		$url = 'https://recaptchaenterprise.googleapis.com/v1/projects/' . $projectId . '/assessments?key=' . $apiKey;
 
 		try
@@ -343,18 +370,22 @@ final class Plugin implements PluginInterface
 		}
 		catch (\RuntimeException $exception)
 		{
-			if (\JDEBUG)
-			{
-				throw $exception;
-			}
 
 			// Connection or transport error.
+			$this->logToDatabase($expectedActionForLog, null, null, 'error', '', 'Connection error: ' . $exception->getMessage(), $formName, $formEmail);
+			if (\JDEBUG) {
+				Log::add('action=' . $expectedActionForLog . ', result=error, name=' . $formName . ', email=' . $formEmail . ', reason=Connection error: ' . $exception->getMessage(), Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); 
+				throw $exception;
+		}
 			return !$this->params->get('strictMode');
 		}
 
 		// Remote service error.
 		if ($body === null)
 		{
+			if (\JDEBUG) {Log::add('action=' . $expectedActionForLog . ', result=error, name=' . $formName . ', email=' . $formEmail . ', reason=Invalid response from reCAPTCHA service', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+			$this->logToDatabase($expectedActionForLog, null, null, 'error', '', 'Invalid response from reCAPTCHA service', $formName, $formEmail);
+
 			if (\JDEBUG)
 			{
 				throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_V3_ERROR_INVALID_RESPONSE'));
@@ -366,6 +397,10 @@ final class Plugin implements PluginInterface
 		// Check if the API returned an error object.
 		if (!empty($body->error))
 		{
+			$apiErrorMsg = $body->error->message ?? 'Unknown API error';
+			if (\JDEBUG) {Log::add('action=' . $expectedActionForLog . ', result=error, name=' . $formName . ', email=' . $formEmail . ', reason=API error: ' . $apiErrorMsg, Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+			$this->logToDatabase($expectedActionForLog, null, null, 'error', '', 'API error: ' . $apiErrorMsg, $formName, $formEmail);
+
 			if (\JDEBUG)
 			{
 				$errorMessage = $body->error->message ?? $language->_('PLG_CAPTCHA_RECAPTCHA_V3_ERROR_INVALID_RESPONSE');
@@ -379,6 +414,8 @@ final class Plugin implements PluginInterface
 		if (!isset($body->tokenProperties->valid) || $body->tokenProperties->valid !== true)
 		{
 			$invalidReason = $body->tokenProperties->invalidReason ?? '';
+			if (\JDEBUG) {Log::add('action=' . $expectedActionForLog . ', result=fail, name=' . $formName . ', email=' . $formEmail . ', invalidReason=' . $invalidReason . ', reason=Invalid token', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+			$this->logToDatabase($expectedActionForLog, null, null, 'fail', $invalidReason, 'Invalid token', $formName, $formEmail);
 
 			if ($invalidReason !== '' && \in_array($invalidReason, self::INVALID_REASONS, true))
 			{
@@ -393,6 +430,8 @@ final class Plugin implements PluginInterface
 
 		if (!isset($body->tokenProperties->action) || $body->tokenProperties->action !== $expectedAction)
 		{
+			if (\JDEBUG) {Log::add('action=' . $expectedAction . ', score=' . ($body->riskAnalysis->score ?? 'null') . ', result=fail, name=' . $formName . ', email=' . $formEmail . ', reason=Action mismatch: expected ' . $expectedAction . ', got ' . ($body->tokenProperties->action ?? 'null'), Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+			$this->logToDatabase($expectedAction, $body->riskAnalysis->score ?? null, null, 'fail', '', 'Action mismatch: expected ' . $expectedAction . ', got ' . ($body->tokenProperties->action ?? 'null'), $formName, $formEmail);
 			throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_V3_ERROR_INVALID_ACTION'));
 		}
 
@@ -405,6 +444,9 @@ final class Plugin implements PluginInterface
 
 		if (!isset($body->riskAnalysis->score) || $body->riskAnalysis->score < $score)
 		{
+			if (\JDEBUG) {Log::add('action=' . $expectedAction . ', score=' . ($body->riskAnalysis->score ?? 'null') . ', threshold=' . $score . ', result=fail, name=' . $formName . ', email=' . $formEmail . ', reason=Score below threshold', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+			$this->logToDatabase($expectedAction, $body->riskAnalysis->score ?? null, $score, 'fail', '', 'Score below threshold', $formName, $formEmail);
+
 			if ($this->hasCaptcha())
 			{
 				$this->setShouldShowCaptcha(true);
@@ -413,12 +455,80 @@ final class Plugin implements PluginInterface
 			throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_V3_ERROR_CAPTCHA_VERIFICATION'));
 		}
 
+		if (\JDEBUG) {Log::add('action=' . $expectedAction . ', score=' . $body->riskAnalysis->score . ', threshold=' . $score . ', result=pass, name=' . $formName . ', email=' . $formEmail, Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+		$this->logToDatabase($expectedAction, $body->riskAnalysis->score, $score, 'pass', '', '', $formName, $formEmail);
+
 		if ($this->hasCaptcha())
 		{
 			$this->setShouldShowCaptcha(false);
 		}
 
 		return true;
+	}
+
+	/**
+	 * Logs a reCAPTCHA verification event to the database.
+	 *
+	 * @param   string       $action         The reCAPTCHA action name.
+	 * @param   float|null   $score          The score returned by reCAPTCHA.
+	 * @param   float|null   $threshold      The configured score threshold.
+	 * @param   string       $result         Result: 'pass', 'fail', or 'error'.
+	 * @param   string       $invalidReason  The invalid reason code from reCAPTCHA.
+	 * @param   string       $errorMessage   Additional error/context message.
+	 * @param   string       $formName       Name submitted on the form (if available).
+	 * @param   string       $formEmail      Email submitted on the form (if available).
+	 *
+	 * @return  void
+	 *
+	 * @since   2.1.0
+	 */
+	private function logToDatabase(
+		string $action,
+		?float $score,
+		?float $threshold,
+		string $result,
+		string $invalidReason = '',
+		string $errorMessage = '',
+		string $formName = '',
+		string $formEmail = ''
+	): void {
+		if (!$this->params->get('enableLogging'))
+		{
+			return;
+		}
+
+		try
+		{
+			$db = Factory::getContainer()->get(DatabaseInterface::class);
+
+			$logEntry = (object) [
+				'log_date'       => Factory::getDate()->toSql(),
+				'ip_address'     => $this->app instanceof CMSWebApplicationInterface
+					? $this->app->getInput()->server->getString('REMOTE_ADDR', '')
+					: '',
+				'action'         => $action,
+				'score'          => $score,
+				'threshold'      => $threshold,
+				'result'         => $result,
+				'invalid_reason' => $invalidReason,
+				'error_message'  => $errorMessage,
+				'page_url'       => $this->app instanceof CMSWebApplicationInterface
+					? substr($this->app->getInput()->server->getString('REQUEST_URI', ''), 0, 2048)
+					: '',
+				'user_id'        => method_exists($this->app, 'getIdentity')
+					? (int) ($this->app->getIdentity()?->id ?? 0)
+					: 0,
+				'form_name'      => substr($formName, 0, 400),
+				'form_email'     => substr($formEmail, 0, 320),
+			];
+
+			$db->insertObject('#__recaptcha_v3_log', $logEntry);
+		}
+		catch (\Throwable $e)
+		{
+			// Logging should never break the captcha flow.
+			Log::add('reCAPTCHA logging failed: ' . $e->getMessage(), Log::WARNING, 'plg_captcha_recaptcha_v3');
+		}
 	}
 
 	private function escape(?string $string): string

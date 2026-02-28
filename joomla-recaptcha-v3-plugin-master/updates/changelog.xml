@@ -71,4 +71,19 @@
 		<type>plugin</type>
 		<version>2.0.0</version>
 	</changelog>
+	<changelog>
+		<element>recaptcha_v3</element>
+		<type>plugin</type>
+		<version>2.0.1</version>
+	</changelog>
+	<changelog>
+		<element>recaptcha_v3</element>
+		<type>plugin</type>
+		<version>2.0.2</version>
+	</changelog>
+	<changelog>
+		<element>recaptcha_v3</element>
+		<type>plugin</type>
+		<version>2.0.3</version>
+	</changelog>
 </changelogs>

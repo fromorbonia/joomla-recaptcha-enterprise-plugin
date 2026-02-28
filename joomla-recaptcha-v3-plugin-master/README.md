@@ -6,7 +6,14 @@ Register on the [Google Cloud Console](https://console.cloud.google.com/) and cr
 - Based on Joomla's Captcha API, supports compliant 3rd party extensions
 - Uses reCAPTCHA Enterprise assessment API for server-side verification
 
-## Setup
+## Enable Captha on your site
+- Install this extension
+- Goto System → Global Configuration → Site → Default Captcha
+  - Select "reCAPTCHA v3"
+- Goto Users → Manage → Options
+  - Select "Use global default" or "reCAPTCHA v3"
+
+## Setup and configure plugin options
 1. Create a Google Cloud project and enable the reCAPTCHA Enterprise API.
 2. Create a reCAPTCHA Enterprise site key (score-based / v3 type) in the Cloud Console.
 3. Create an API key in the Cloud Console (restrict it to the reCAPTCHA Enterprise API).

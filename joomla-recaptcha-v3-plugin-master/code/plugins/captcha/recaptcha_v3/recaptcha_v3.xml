@@ -5,12 +5,23 @@
 	<creationDate>2026-02-23</creationDate>
 	<copyright>(C) 2023 SharkyKZ</copyright>
 	<license>GPL-3.0-or-later</license>
-	<version>2.0.0</version>
+	<version>2.0.3</version>
 	<description>PLG_CAPTCHA_RECAPTCHA_V3_XML_DESCRIPTION</description>
 	<namespace path="src">Sharky\Plugin\Captcha\RecaptchaV3</namespace>
+	<install>
+		<sql>
+			<file driver="mysql" charset="utf8">sql/install.mysql.sql</file>
+		</sql>
+	</install>
+	<uninstall>
+		<sql>
+			<file driver="mysql" charset="utf8">sql/uninstall.mysql.sql</file>
+		</sql>
+	</uninstall>
 	<files>
 		<folder plugin="recaptcha_v3">services</folder>
 		<folder>src</folder>
+		<folder>sql</folder>
 		<filename>install.script.php</filename>
 		<folder>tmpl</folder>
 	</files>
@@ -77,6 +88,19 @@
 					<option value="submit">PLG_CAPTCHA_RECAPTCHA_V3_CONFIG_TRIGGER_METHOD_SUBMIT</option>
 					<option value="load">PLG_CAPTCHA_RECAPTCHA_V3_CONFIG_TRIGGER_METHOD_LOAD</option>
 					<option value="focusin">PLG_CAPTCHA_RECAPTCHA_V3_CONFIG_TRIGGER_METHOD_FOCUSIN</option>
+				</field>
+				<field
+					name="enableLogging"
+					type="radio"
+					label="PLG_CAPTCHA_RECAPTCHA_V3_CONFIG_ENABLE_LOGGING_LABEL"
+					description="PLG_CAPTCHA_RECAPTCHA_V3_CONFIG_ENABLE_LOGGING_DESCRIPTION"
+					layout="joomla.form.field.radio.switcher"
+					default="0"
+					filter="uint"
+					validate="options"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
 				</field>
 			</fieldset>
 			<fieldset name="advanced">

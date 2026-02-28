@@ -89,22 +89,54 @@ const observerCallback = (mutations, observer) => {
 	}
 };
 
-for (const element of document.querySelectorAll(answerSelector)) {
+/**
+ * Initialise a captcha field inside the given container element.
+ * Called by onDisplay's inline script so that dynamically loaded
+ * forms (popups, AJAX) get a token immediately.
+ *
+ * @param {HTMLElement} container  The element that wraps the hidden inputs.
+ */
+const initField = function (container) {
+	const answerElement = container.querySelector(answerSelector);
+	const actionElement = container.querySelector(actionSelector);
+
+	if (!answerElement || !actionElement) {
+		return;
+	}
+
+	// Avoid double-initialising if main.js already bound this field at page load.
+	if (answerElement.dataset.recaptchaInit === '1') {
+		return;
+	}
+	answerElement.dataset.recaptchaInit = '1';
+
+	const form = answerElement.form;
+
+	if (!form) {
+		return;
+	}
+
 	if (triggerMethod === 'submit') {
-		element.form.addEventListener('submit', handleSubmit);
-		continue;
+		form.addEventListener('submit', handleSubmit);
+		return;
 	}
 
 	if (triggerMethod === 'focusin') {
-		element.form.addEventListener('focusin', handleFocus, {once: true});
-
-		// Special case for editors using dynamically addeds iframes
+		form.addEventListener('focusin', handleFocus, {once: true});
 		const observer = new MutationObserver(observerCallback);
-		observer.observe(element.form, observerConfig);
-
-		continue;
+		observer.observe(form, observerConfig);
+		return;
 	}
 
-	handleLoad(element);
-	setInterval(handleLoad, 110_000, element);
+	// Default: generate token now and refresh on interval.
+	handleLoad(answerElement);
+	setInterval(handleLoad, 110_000, answerElement);
+};
+
+// Expose globally so onDisplay's inline script can call it.
+window.plgRecaptchaV3Init = initField;
+
+// Initial scan for fields already in the DOM at page load.
+for (const element of document.querySelectorAll(answerSelector)) {
+	initField(element.parentNode);
 };
