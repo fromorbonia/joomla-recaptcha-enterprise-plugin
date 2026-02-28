@@ -3,7 +3,7 @@
  * @copyright   (C) 2023 SharkyKZ
  * @license     GPL-3.0-or-later
  */
-namespace Sharky\Plugin\Captcha\RecaptchaV3;
+namespace Sharky\Plugin\Captcha\RecaptchaEnterprise;
 
 \defined('_JEXEC') || exit;
 
@@ -53,7 +53,7 @@ final class Plugin implements PluginInterface
 	 * @var	 string
 	 * @since  1.0.0
 	 */
-	private const SCRIPT_HASH = '69641ef1';
+	private const SCRIPT_HASH = '6db5f7e4';
 
 	/**
 	 * Application instance.
@@ -141,11 +141,11 @@ final class Plugin implements PluginInterface
 	 */
 	public function onInit($id = null)
 	{
-		if (\JDEBUG) {Log::add('start', Log::INFO, 'plg_reacaptcha_v3_on_init'); }
+		if (\JDEBUG) {Log::add('start', Log::INFO, 'plg_reacaptcha_enterprise_on_init'); }
 
 		if ($this->shouldShowCaptcha())
 		{
-			if (\JDEBUG) { Log::add('show', Log::INFO, 'plg_reacaptcha_v3_on_init'); }
+			if (\JDEBUG) { Log::add('show', Log::INFO, 'plg_reacaptcha_enterprise_on_init'); }
 			return $this->getCaptcha()->initialise($id);
 		}
 
@@ -166,16 +166,16 @@ final class Plugin implements PluginInterface
 			return false;
 		}
 
-		$document->addScriptOptions('plg_captcha_recaptcha_v3.siteKey', $siteKey);
-		$document->addScriptOptions('plg_captcha_recaptcha_v3.triggerMethod', $this->params->get('triggerMethod', 'focusin'));
+		$document->addScriptOptions('plg_captcha_recaptcha_enterprise.siteKey', $siteKey);
+		$document->addScriptOptions('plg_captcha_recaptcha_enterprise.triggerMethod', $this->params->get('triggerMethod', 'focusin'));
 		$assetManager = $document->getWebAssetManager();
 
-		if (!$assetManager->assetExists('script', 'plg_captcha_recaptcha_v3.api.js'))
+		if (!$assetManager->assetExists('script', 'plg_captcha_recaptcha_enterprise.api.js'))
 		{
 			$languageTag = $this->app->getLanguage()->getTag();
 			$assetManager->registerAsset(
 				'script',
-				'plg_captcha_recaptcha_v3.api.js',
+				'plg_captcha_recaptcha_enterprise.api.js',
 				'https://www.google.com/recaptcha/enterprise.js?hl=' . $languageTag . '&render=' . $siteKey,
 				[],
 				['defer' => true, 'referrerpolicy' => 'no-referrer'],
@@ -183,20 +183,20 @@ final class Plugin implements PluginInterface
 			);
 		}
 
-		if (!$assetManager->assetExists('script', 'plg_captcha_recaptcha_v3.main.js'))
+		if (!$assetManager->assetExists('script', 'plg_captcha_recaptcha_enterprise.main.js'))
 		{
 			$assetManager->registerAsset(
 				'script',
-				'plg_captcha_recaptcha_v3.main.js',
-				'plg_captcha_recaptcha_v3/main.js',
+				'plg_captcha_recaptcha_enterprise.main.js',
+				'plg_captcha_recaptcha_enterprise/main.js',
 				['version' => self::SCRIPT_HASH],
 				['type' => 'module'],
-				['plg_captcha_recaptcha_v3.api.js', 'core']
+				['plg_captcha_recaptcha_enterprise.api.js', 'core']
 			);
 		}
 
-		$assetManager->useAsset('script', 'plg_captcha_recaptcha_v3.api.js');
-		$assetManager->useAsset('script', 'plg_captcha_recaptcha_v3.main.js');
+		$assetManager->useAsset('script', 'plg_captcha_recaptcha_enterprise.api.js');
+		$assetManager->useAsset('script', 'plg_captcha_recaptcha_enterprise.main.js');
 
 		return true;
 	}
@@ -214,11 +214,11 @@ final class Plugin implements PluginInterface
 	 */
 	public function onDisplay($name = null, $id = null, $class = '')
 	{
-		if (\JDEBUG) {Log::add('start', Log::INFO, 'plg_reacaptcha_v3_on_display'); }
+		if (\JDEBUG) {Log::add('start', Log::INFO, 'plg_reacaptcha_enterprise_on_display'); }
 
 		if ($this->shouldShowCaptcha())
 		{
-			if (\JDEBUG) {Log::add('show', Log::INFO, 'plg_reacaptcha_v3_on_display'); }
+			if (\JDEBUG) {Log::add('show', Log::INFO, 'plg_reacaptcha_enterprise_on_display'); }
 			return $this->getCaptcha()->display($name, $id, $class);
 		}
 
@@ -231,7 +231,7 @@ final class Plugin implements PluginInterface
 
 		$attributes = [
 			'type' => 'hidden',
-			'class' => 'plg-captcha-recaptcha-v3-hidden',
+			'class' => 'plg-captcha-recaptcha-enterprise-hidden',
 		];
 
 		if ($name !== null && $name !== '')
@@ -247,14 +247,14 @@ final class Plugin implements PluginInterface
 		$attributes = array_map([$this, 'escape'], $attributes);
 
 		$html = '<input ' . ArrayHelper::toString($attributes) . '>';
-		$html .= '<input type="hidden" name="plg_captcha_recaptcha_v3_action" class="plg-captcha-recaptcha-v3-action">';
+		$html .= '<input type="hidden" name="plg_captcha_recaptcha_enterprise_action" class="plg-captcha-recaptcha-enterprise-action">';
 		$html .= $this->render('noscript');
 
 		// Trigger token initialisation via main.js's exposed function.
 		// Handles popups and dynamically loaded forms where main.js's page-load scan already ran.
-		$html .= '<script>window.plgRecaptchaV3Init&&window.plgRecaptchaV3Init(document.currentScript.parentNode);</script>';
+		$html .= '<script>window.plgRecaptchaEnterpriseInit&&window.plgRecaptchaEnterpriseInit(document.currentScript.parentNode);</script>';
 
-		if (\JDEBUG) {Log::add('html-rendered', Log::INFO, 'plg_reacaptcha_v3_on_display'); }
+		if (\JDEBUG) {Log::add('html-rendered', Log::INFO, 'plg_reacaptcha_enterprise_on_display'); }
 		
 		return $html;
 	}
@@ -293,7 +293,7 @@ final class Plugin implements PluginInterface
 	 */
 	public function onCheckAnswer($code = null)
 	{
-		if (\JDEBUG) {Log::add('start', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+		if (\JDEBUG) {Log::add('start', Log::INFO, 'plg_reacaptcha_enterprise_on_check_answer'); }
 
 		// Capture form name and email fields when available (e.g. registration, contact forms).
 		$jform = $this->app instanceof CMSWebApplicationInterface
@@ -304,7 +304,7 @@ final class Plugin implements PluginInterface
 
 		if ($this->shouldShowCaptcha())
 		{
-			if (\JDEBUG) {Log::add('show', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+			if (\JDEBUG) {Log::add('show', Log::INFO, 'plg_reacaptcha_enterprise_on_check_answer'); }
 			if ($answer = $this->getCaptcha()->checkAnswer($code))
 			{
 				$this->setShouldShowCaptcha(false);
@@ -319,9 +319,9 @@ final class Plugin implements PluginInterface
 		if ($code === null || $code === '')
 		{
 			// No answer provided, form was manipulated.
-			if (\JDEBUG) {Log::add('result=fail, name=' . $formName . ', email=' . $formEmail . ', reason=Empty response - form may have been manipulated', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+			if (\JDEBUG) {Log::add('result=fail, name=' . $formName . ', email=' . $formEmail . ', reason=Empty response - form may have been manipulated', Log::INFO, 'plg_reacaptcha_enterprise_on_check_answer'); }
 			$this->logToDatabase('', null, null, 'fail', '', 'Empty response - form may have been manipulated', $formName, $formEmail);
-			throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_V3_ERROR_EMPTY_RESPONSE'));
+			throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_ERROR_EMPTY_RESPONSE'));
 		}
 
 		$apiKey = $this->params->get('apiKey');
@@ -329,9 +329,9 @@ final class Plugin implements PluginInterface
 
 		if (!$apiKey || !$projectId)
 		{
-			if (\JDEBUG) {Log::add('result=error, name=' . $formName . ', email=' . $formEmail . ', reason=Missing API key or project ID', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+			if (\JDEBUG) {Log::add('result=error, name=' . $formName . ', email=' . $formEmail . ', reason=Missing API key or project ID', Log::INFO, 'plg_reacaptcha_enterprise_on_check_answer'); }
 			$this->logToDatabase('', null, null, 'error', '', 'Missing API key or project ID', $formName, $formEmail);
-			throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_V3_NO_API_KEY'));
+			throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_NO_API_KEY'));
 		}
 
 		try
@@ -345,7 +345,7 @@ final class Plugin implements PluginInterface
 			// No HTTP transports supported.
 			$this->logToDatabase('', null, null, 'error', '', 'No HTTP transports available', $formName, $formEmail);
 			if (\JDEBUG) {
-				Log::add('result=error, name=' . $formName . ', email=' . $formEmail . ', reason=No HTTP transports available', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); 
+				Log::add('result=error, name=' . $formName . ', email=' . $formEmail . ', reason=No HTTP transports available', Log::INFO, 'plg_reacaptcha_enterprise_on_check_answer'); 
 				throw $exception;
 			}
 			return !$this->params->get('strictMode');
@@ -355,11 +355,11 @@ final class Plugin implements PluginInterface
 			'event' => [
 				'token' => $code,
 				'siteKey' => $this->params->get('siteKey'),
-				'expectedAction' => $this->app->getInput()->get('plg_captcha_recaptcha_v3_action', '', 'RAW'),
+				'expectedAction' => $this->app->getInput()->get('plg_captcha_recaptcha_enterprise_action', '', 'RAW'),
 			],
 		]);
 
-		$expectedActionForLog = $this->app->getInput()->get('plg_captcha_recaptcha_v3_action', '', 'RAW');
+		$expectedActionForLog = $this->app->getInput()->get('plg_captcha_recaptcha_enterprise_action', '', 'RAW');
 
 		$url = 'https://recaptchaenterprise.googleapis.com/v1/projects/' . $projectId . '/assessments?key=' . $apiKey;
 
@@ -374,7 +374,7 @@ final class Plugin implements PluginInterface
 			// Connection or transport error.
 			$this->logToDatabase($expectedActionForLog, null, null, 'error', '', 'Connection error: ' . $exception->getMessage(), $formName, $formEmail);
 			if (\JDEBUG) {
-				Log::add('action=' . $expectedActionForLog . ', result=error, name=' . $formName . ', email=' . $formEmail . ', reason=Connection error: ' . $exception->getMessage(), Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); 
+				Log::add('action=' . $expectedActionForLog . ', result=error, name=' . $formName . ', email=' . $formEmail . ', reason=Connection error: ' . $exception->getMessage(), Log::INFO, 'plg_reacaptcha_enterprise_on_check_answer'); 
 				throw $exception;
 		}
 			return !$this->params->get('strictMode');
@@ -383,12 +383,12 @@ final class Plugin implements PluginInterface
 		// Remote service error.
 		if ($body === null)
 		{
-			if (\JDEBUG) {Log::add('action=' . $expectedActionForLog . ', result=error, name=' . $formName . ', email=' . $formEmail . ', reason=Invalid response from reCAPTCHA service', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+			if (\JDEBUG) {Log::add('action=' . $expectedActionForLog . ', result=error, name=' . $formName . ', email=' . $formEmail . ', reason=Invalid response from reCAPTCHA service', Log::INFO, 'plg_reacaptcha_enterprise_on_check_answer'); }
 			$this->logToDatabase($expectedActionForLog, null, null, 'error', '', 'Invalid response from reCAPTCHA service', $formName, $formEmail);
 
 			if (\JDEBUG)
 			{
-				throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_V3_ERROR_INVALID_RESPONSE'));
+				throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_ERROR_INVALID_RESPONSE'));
 			}
 
 			return !$this->params->get('strictMode');
@@ -398,12 +398,12 @@ final class Plugin implements PluginInterface
 		if (!empty($body->error))
 		{
 			$apiErrorMsg = $body->error->message ?? 'Unknown API error';
-			if (\JDEBUG) {Log::add('action=' . $expectedActionForLog . ', result=error, name=' . $formName . ', email=' . $formEmail . ', reason=API error: ' . $apiErrorMsg, Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+			if (\JDEBUG) {Log::add('action=' . $expectedActionForLog . ', result=error, name=' . $formName . ', email=' . $formEmail . ', reason=API error: ' . $apiErrorMsg, Log::INFO, 'plg_reacaptcha_enterprise_on_check_answer'); }
 			$this->logToDatabase($expectedActionForLog, null, null, 'error', '', 'API error: ' . $apiErrorMsg, $formName, $formEmail);
 
 			if (\JDEBUG)
 			{
-				$errorMessage = $body->error->message ?? $language->_('PLG_CAPTCHA_RECAPTCHA_V3_ERROR_INVALID_RESPONSE');
+				$errorMessage = $body->error->message ?? $language->_('PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_ERROR_INVALID_RESPONSE');
 				throw new \RuntimeException($errorMessage);
 			}
 
@@ -414,25 +414,25 @@ final class Plugin implements PluginInterface
 		if (!isset($body->tokenProperties->valid) || $body->tokenProperties->valid !== true)
 		{
 			$invalidReason = $body->tokenProperties->invalidReason ?? '';
-			if (\JDEBUG) {Log::add('action=' . $expectedActionForLog . ', result=fail, name=' . $formName . ', email=' . $formEmail . ', invalidReason=' . $invalidReason . ', reason=Invalid token', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+			if (\JDEBUG) {Log::add('action=' . $expectedActionForLog . ', result=fail, name=' . $formName . ', email=' . $formEmail . ', invalidReason=' . $invalidReason . ', reason=Invalid token', Log::INFO, 'plg_reacaptcha_enterprise_on_check_answer'); }
 			$this->logToDatabase($expectedActionForLog, null, null, 'fail', $invalidReason, 'Invalid token', $formName, $formEmail);
 
 			if ($invalidReason !== '' && \in_array($invalidReason, self::INVALID_REASONS, true))
 			{
-				throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_V3_ERROR_' . $invalidReason));
+				throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_ERROR_' . $invalidReason));
 			}
 
 			return false;
 		}
 
 		// Validate expected action.
-		$expectedAction = $this->app->getInput()->get('plg_captcha_recaptcha_v3_action', '', 'RAW');
+		$expectedAction = $this->app->getInput()->get('plg_captcha_recaptcha_enterprise_action', '', 'RAW');
 
 		if (!isset($body->tokenProperties->action) || $body->tokenProperties->action !== $expectedAction)
 		{
-			if (\JDEBUG) {Log::add('action=' . $expectedAction . ', score=' . ($body->riskAnalysis->score ?? 'null') . ', result=fail, name=' . $formName . ', email=' . $formEmail . ', reason=Action mismatch: expected ' . $expectedAction . ', got ' . ($body->tokenProperties->action ?? 'null'), Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+			if (\JDEBUG) {Log::add('action=' . $expectedAction . ', score=' . ($body->riskAnalysis->score ?? 'null') . ', result=fail, name=' . $formName . ', email=' . $formEmail . ', reason=Action mismatch: expected ' . $expectedAction . ', got ' . ($body->tokenProperties->action ?? 'null'), Log::INFO, 'plg_reacaptcha_enterprise_on_check_answer'); }
 			$this->logToDatabase($expectedAction, $body->riskAnalysis->score ?? null, null, 'fail', '', 'Action mismatch: expected ' . $expectedAction . ', got ' . ($body->tokenProperties->action ?? 'null'), $formName, $formEmail);
-			throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_V3_ERROR_INVALID_ACTION'));
+			throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_ERROR_INVALID_ACTION'));
 		}
 
 		$score = $this->params->get('score', 0.5);
@@ -444,7 +444,7 @@ final class Plugin implements PluginInterface
 
 		if (!isset($body->riskAnalysis->score) || $body->riskAnalysis->score < $score)
 		{
-			if (\JDEBUG) {Log::add('action=' . $expectedAction . ', score=' . ($body->riskAnalysis->score ?? 'null') . ', threshold=' . $score . ', result=fail, name=' . $formName . ', email=' . $formEmail . ', reason=Score below threshold', Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+			if (\JDEBUG) {Log::add('action=' . $expectedAction . ', score=' . ($body->riskAnalysis->score ?? 'null') . ', threshold=' . $score . ', result=fail, name=' . $formName . ', email=' . $formEmail . ', reason=Score below threshold', Log::INFO, 'plg_reacaptcha_enterprise_on_check_answer'); }
 			$this->logToDatabase($expectedAction, $body->riskAnalysis->score ?? null, $score, 'fail', '', 'Score below threshold', $formName, $formEmail);
 
 			if ($this->hasCaptcha())
@@ -452,10 +452,10 @@ final class Plugin implements PluginInterface
 				$this->setShouldShowCaptcha(true);
 			}
 
-			throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_V3_ERROR_CAPTCHA_VERIFICATION'));
+			throw new \RuntimeException($language->_('PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_ERROR_CAPTCHA_VERIFICATION'));
 		}
 
-		if (\JDEBUG) {Log::add('action=' . $expectedAction . ', score=' . $body->riskAnalysis->score . ', threshold=' . $score . ', result=pass, name=' . $formName . ', email=' . $formEmail, Log::INFO, 'plg_reacaptcha_v3_on_check_answer'); }
+		if (\JDEBUG) {Log::add('action=' . $expectedAction . ', score=' . $body->riskAnalysis->score . ', threshold=' . $score . ', result=pass, name=' . $formName . ', email=' . $formEmail, Log::INFO, 'plg_reacaptcha_enterprise_on_check_answer'); }
 		$this->logToDatabase($expectedAction, $body->riskAnalysis->score, $score, 'pass', '', '', $formName, $formEmail);
 
 		if ($this->hasCaptcha())
@@ -522,12 +522,12 @@ final class Plugin implements PluginInterface
 				'form_email'     => substr($formEmail, 0, 320),
 			];
 
-			$db->insertObject('#__recaptcha_v3_log', $logEntry);
+			$db->insertObject('#__recaptcha_enterprise_log', $logEntry);
 		}
 		catch (\Throwable $e)
 		{
 			// Logging should never break the captcha flow.
-			Log::add('reCAPTCHA logging failed: ' . $e->getMessage(), Log::WARNING, 'plg_captcha_recaptcha_v3');
+			Log::add('reCAPTCHA logging failed: ' . $e->getMessage(), Log::WARNING, 'plg_captcha_recaptcha_enterprise');
 		}
 	}
 
@@ -539,7 +539,7 @@ final class Plugin implements PluginInterface
 	private function render(string $layout): string
 	{
 		$html = '';
-		$file = PluginHelper::getLayoutPath('captcha', 'recaptcha_v3', $layout);
+		$file = PluginHelper::getLayoutPath('captcha', 'recaptcha_enterprise', $layout);
 
 		if (!is_file($file))
 		{
@@ -566,7 +566,7 @@ final class Plugin implements PluginInterface
 
 	private function loadLanguage(): void
 	{
-		$this->app->getLanguage()->load('plg_captcha_recaptcha_v3', \JPATH_ADMINISTRATOR);
+		$this->app->getLanguage()->load('plg_captcha_recaptcha_enterprise', \JPATH_ADMINISTRATOR);
 	}
 
 	private function setShouldShowCaptcha(bool $value): void
@@ -578,12 +578,12 @@ final class Plugin implements PluginInterface
 
 		if ($value)
 		{
-			$this->app->getSession()->set('plg_captcha_recaptcha_v3.showCaptcha', true);
+			$this->app->getSession()->set('plg_captcha_recaptcha_enterprise.showCaptcha', true);
 
 			return;
 		}
 
-		$this->app->getSession()->remove('plg_captcha_recaptcha_v3.showCaptcha');
+		$this->app->getSession()->remove('plg_captcha_recaptcha_enterprise.showCaptcha');
 	}
 
 	private function shouldShowCaptcha(): bool
@@ -598,7 +598,7 @@ final class Plugin implements PluginInterface
 			return false;
 		}
 
-		return $this->app->getSession()->has('plg_captcha_recaptcha_v3.showCaptcha');
+		return $this->app->getSession()->has('plg_captcha_recaptcha_enterprise.showCaptcha');
 	}
 
 	private function hasCaptcha(): bool
@@ -608,7 +608,7 @@ final class Plugin implements PluginInterface
 			return false;
 		}
 
-		if ($captcha === 'recaptcha_v3')
+		if ($captcha === 'recaptcha_enterprise')
 		{
 			return false;
 		}

@@ -14,7 +14,7 @@ use Joomla\CMS\Version;
 /**
  * Plugin installer script.
  */
-final class PlgCaptchaRecaptcha_V3InstallerScript
+final class PlgCaptchaRecaptcha_EnterpriseInstallerScript
 {
 	/**
 	 * Minimum supported Joomla! version.
@@ -77,14 +77,14 @@ final class PlgCaptchaRecaptcha_V3InstallerScript
 
 		if (version_compare(PHP_VERSION, $this->phpMinimum, '<'))
 		{
-			Log::add(Text::sprintf('PLG_CAPTCHA_RECAPTCHA_V3_INSTALL_PHP_MINIMUM', $this->phpMinimum), Log::WARNING, 'jerror');
+			Log::add(Text::sprintf('PLG_CAPTCHA_RECAPTCHA_Enterprise_INSTALL_PHP_MINIMUM', $this->phpMinimum), Log::WARNING, 'jerror');
 
 			return false;
 		}
 
 		if (version_compare(PHP_VERSION, $this->phpUnsupported, '>='))
 		{
-			Log::add(Text::sprintf('PLG_CAPTCHA_RECAPTCHA_V3_INSTALL_PHP_UNSUPPORTED', $this->phpUnsupported), Log::WARNING, 'jerror');
+			Log::add(Text::sprintf('PLG_CAPTCHA_RECAPTCHA_Enterprise_INSTALL_PHP_UNSUPPORTED', $this->phpUnsupported), Log::WARNING, 'jerror');
 
 			return false;
 		}
@@ -112,7 +112,7 @@ final class PlgCaptchaRecaptcha_V3InstallerScript
 		// Ensure the log table exists on updates (fresh installs are handled by the <install> SQL).
 		$db = Factory::getContainer()->get('DatabaseDriver');
 
-		$query = "CREATE TABLE IF NOT EXISTS `#__recaptcha_v3_log` (
+		$query = "CREATE TABLE IF NOT EXISTS `#__recaptcha_enterprise_log` (
 			`id` int unsigned NOT NULL AUTO_INCREMENT,
 			`log_date` datetime NOT NULL,
 			`ip_address` varchar(45) NOT NULL DEFAULT '',
@@ -138,7 +138,7 @@ final class PlgCaptchaRecaptcha_V3InstallerScript
 		}
 		catch (\RuntimeException $e)
 		{
-			Log::add('Failed to create recaptcha_v3_log table: ' . $e->getMessage(), Log::ERROR, 'jerror');
+			Log::add('Failed to create recaptcha_enterprise_log table: ' . $e->getMessage(), Log::ERROR, 'jerror');
 
 			return false;
 		}
@@ -146,16 +146,16 @@ final class PlgCaptchaRecaptcha_V3InstallerScript
 		// Add form_name and form_email columns if upgrading from an older version.
 		try
 		{
-			$columns = $db->getTableColumns('#__recaptcha_v3_log');
+			$columns = $db->getTableColumns('#__recaptcha_enterprise_log');
 
 			if (!isset($columns['form_name']))
 			{
-				$db->setQuery("ALTER TABLE `#__recaptcha_v3_log` ADD COLUMN `form_name` varchar(400) NOT NULL DEFAULT '' AFTER `user_id`")->execute();
+				$db->setQuery("ALTER TABLE `#__recaptcha_enterprise_log` ADD COLUMN `form_name` varchar(400) NOT NULL DEFAULT '' AFTER `user_id`")->execute();
 			}
 
 			if (!isset($columns['form_email']))
 			{
-				$db->setQuery("ALTER TABLE `#__recaptcha_v3_log` ADD COLUMN `form_email` varchar(320) NOT NULL DEFAULT '' AFTER `form_name`")->execute();
+				$db->setQuery("ALTER TABLE `#__recaptcha_enterprise_log` ADD COLUMN `form_email` varchar(320) NOT NULL DEFAULT '' AFTER `form_name`")->execute();
 			}
 		}
 		catch (\RuntimeException $e)

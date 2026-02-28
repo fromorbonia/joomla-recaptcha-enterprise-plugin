@@ -2,10 +2,10 @@
  * @copyright  (C) 2023 SharkyKZ
  * @license    GPL-3.0-or-later
  */
-const captchaKey = Joomla.getOptions('plg_captcha_recaptcha_v3.siteKey', '');
-const triggerMethod = Joomla.getOptions('plg_captcha_recaptcha_v3.triggerMethod', 'focusin');
-const actionSelector = 'input.plg-captcha-recaptcha-v3-action';
-const answerSelector = 'input.plg-captcha-recaptcha-v3-hidden';
+const captchaKey = Joomla.getOptions('plg_captcha_recaptcha_enterprise.siteKey', '');
+const triggerMethod = Joomla.getOptions('plg_captcha_recaptcha_enterprise.triggerMethod', 'focusin');
+const actionSelector = 'input.plg-captcha-recaptcha-enterprise-action';
+const answerSelector = 'input.plg-captcha-recaptcha-enterprise-hidden';
 const getAction = form => findAction(form).replace(/[^a-z0-9]+/gi, '_');
 const findAction = function (form) {
 	if (form.hasAttribute('class') && form.getAttribute('class') !== '') {
@@ -134,7 +134,7 @@ const initField = function (container) {
 };
 
 // Expose globally so onDisplay's inline script can call it.
-window.plgRecaptchaV3Init = initField;
+window.plgRecaptchaenterpriseInit = initField;
 
 // Initial scan for fields already in the DOM at page load.
 for (const element of document.querySelectorAll(answerSelector)) {

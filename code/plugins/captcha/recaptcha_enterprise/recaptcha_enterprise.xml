@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="captcha" method="upgrade">
+	<name>plg_captcha_recaptcha_enterprise</name>
+	<author>SharkyKZ</author>
+	<creationDate>2026-02-23</creationDate>
+	<copyright>(C) 2023 SharkyKZ</copyright>
+	<license>GPL-3.0-or-later</license>
+	<version>2.0.4</version>
+	<description>PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_XML_DESCRIPTION</description>
+	<namespace path="src">Sharky\Plugin\Captcha\RecaptchaEnterprise</namespace>
+	<install>
+		<sql>
+			<file driver="mysql" charset="utf8">sql/install.mysql.sql</file>
+		</sql>
+	</install>
+	<uninstall>
+		<sql>
+			<file driver="mysql" charset="utf8">sql/uninstall.mysql.sql</file>
+		</sql>
+	</uninstall>
+	<files>
+		<folder plugin="recaptcha_enterprise">services</folder>
+		<folder>src</folder>
+		<folder>sql</folder>
+		<filename>install.script.php</filename>
+		<folder>tmpl</folder>
+	</files>
+	<scriptfile>install.script.php</scriptfile>
+	<languages>
+		<language tag="en-GB">language/en-GB/plg_captcha_recaptcha_enterprise.ini</language>
+		<language tag="en-GB">language/en-GB/plg_captcha_recaptcha_enterprise.sys.ini</language>
+	</languages>
+	<media folder="media" destination="plg_captcha_recaptcha_enterprise">
+		<folder>js</folder>
+	</media>
+	<config>
+		<fields name="params">
+			<fieldset name="basic">
+				<field
+					name="siteKey"
+					type="text"
+					label="PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_SITE_KEY_LABEL"
+				/>
+				<field
+					name="apiKey"
+					type="text"
+					label="PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_API_KEY_LABEL"
+					description="PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_API_KEY_DESCRIPTION"
+				/>
+				<field
+					name="projectId"
+					type="text"
+					label="PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_PROJECT_ID_LABEL"
+					description="PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_PROJECT_ID_DESCRIPTION"
+				/>
+				<field
+					name="score"
+					type="number"
+					label="PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_SCORE_LABEL"
+					description="PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_SCORE_DESCRIPTION"
+					validate="number"
+					filter="float"
+					min="0.0"
+					max="1.0"
+					step="0.01"
+					default="0.5"
+				/>
+				<field
+					name="captcha"
+					addfieldprefix="Sharky\Plugin\Captcha\RecaptchaEnterprise\Field"
+					type="Captchas"
+					label="PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_CAPTCHA_LABEL"
+					description="PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_CAPTCHA_DESCRIPTION"
+					validate="options"
+					>
+					<option value="">JNONE</option>
+				</field>
+				<field
+					name="triggerMethod"
+					type="list"
+					label="PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_TRIGGER_METHOD_LABEL"
+					description="PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_TRIGGER_METHOD_DESCRIPTION"
+					default="focusin"
+					filter="cmd"
+					validate="options"
+					required="true"
+					>
+					<option value="submit">PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_TRIGGER_METHOD_SUBMIT</option>
+					<option value="load">PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_TRIGGER_METHOD_LOAD</option>
+					<option value="focusin">PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_TRIGGER_METHOD_FOCUSIN</option>
+				</field>
+				<field
+					name="enableLogging"
+					type="radio"
+					label="PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_ENABLE_LOGGING_LABEL"
+					description="PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_ENABLE_LOGGING_DESCRIPTION"
+					layout="joomla.form.field.radio.switcher"
+					default="0"
+					filter="uint"
+					validate="options"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+			</fieldset>
+			<fieldset name="advanced">
+				<field
+					name="strictMode"
+					type="radio"
+					label="PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_STRICT_MODE_LABEL"
+					description="PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_CONFIG_STRICT_MODE_DESCRIPTION"
+					layout="joomla.form.field.radio.switcher"
+					default="0"
+					filter="uint"
+					validate="options"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+			</fieldset>
+		</fields>
+	</config>
+	<changelogurl>https://raw.githubusercontent.com/fromorbonia/joomla-recaptcha-enterprise-plugin/refs/heads/main/updates/changelog.xml</changelogurl>
+	<updateservers>
+		<server type="extension" name="Captcha - reCAPTCHA Enterprise">https://raw.githubusercontent.com/fromorbonia/joomla-recaptcha-enterprise-plugin/refs/heads/main/updates/updates.xml</server>
+	</updateservers>
+</extension>

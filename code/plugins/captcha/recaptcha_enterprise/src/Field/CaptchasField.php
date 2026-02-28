@@ -3,7 +3,7 @@
  * @copyright   (C) 2023 SharkyKZ
  * @license     GPL-3.0-or-later
  */
-namespace Sharky\Plugin\Captcha\RecaptchaV3\Field;
+namespace Sharky\Plugin\Captcha\RecaptchaEnterprise\Field;
 
 \defined('_JEXEC') || exit;
 
@@ -34,7 +34,7 @@ final class CaptchasField extends PluginsField
 			$options,
 			static function ($v)
 			{
-				return $v->value !== 'recaptcha_v3';
+				return $v->value !== 'recaptcha_enterprise';
 			}
 		);
 	}

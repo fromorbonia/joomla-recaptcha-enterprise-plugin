@@ -1,0 +1,40 @@
+name: Build and Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: zip
+
+      - name: Install Composer dependencies
+        working-directory: build
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run build script
+        working-directory: build
+        run: php build.php ${{ github.event.release.tag_name }}
+
+      - name: Upload zip to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/packages/*.zip
+
+      - name: Commit updated XML files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add updates/ code/plugins/captcha/recaptcha_Enterprise.xml code/plugins/captcha/recaptcha_Enterprise/src/Plugin.php
+          git diff --cached --quiet || git commit -m "Update build artifacts for ${{ github.event.release.tag_name }}"
+          git push origin HEAD:main

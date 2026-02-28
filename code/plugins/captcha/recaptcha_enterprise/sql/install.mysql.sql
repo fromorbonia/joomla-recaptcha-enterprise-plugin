@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `#__recaptcha_v3_log` (
+CREATE TABLE IF NOT EXISTS `#__recaptcha_enterprise_log` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `log_date` datetime NOT NULL,
   `ip_address` varchar(45) NOT NULL DEFAULT '',

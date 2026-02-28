@@ -12,7 +12,7 @@ use Joomla\DI\Container;
 use Joomla\DI\ServiceProviderInterface;
 use Joomla\Http\HttpFactory;
 use Joomla\Registry\Registry;
-use Sharky\Plugin\Captcha\RecaptchaV3\Plugin;
+use Sharky\Plugin\Captcha\RecaptchaEnterprise\Plugin;
 
 return new class implements ServiceProviderInterface
 {
@@ -24,7 +24,7 @@ return new class implements ServiceProviderInterface
 			{
 				return new Plugin(
 					Factory::getApplication(),
-					new Registry(PluginHelper::getPlugin('captcha', 'recaptcha_v3')->params ?? null),
+					new Registry(PluginHelper::getPlugin('captcha', 'recaptcha_enterprise')->params ?? null),
 					new HttpFactory
 				);
 			}
