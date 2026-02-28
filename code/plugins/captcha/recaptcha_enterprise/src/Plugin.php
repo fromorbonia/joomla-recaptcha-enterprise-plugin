@@ -523,11 +523,72 @@ final class Plugin implements PluginInterface
 			];
 
 			$db->insertObject('#__recaptcha_enterprise_log', $logEntry);
+
+			// Probabilistic pruning (~5% of requests) to avoid overhead on every call.
+			if (random_int(1, 20) === 1)
+			{
+				$this->pruneLog($db);
+			}
 		}
 		catch (\Throwable $e)
 		{
 			// Logging should never break the captcha flow.
 			Log::add('reCAPTCHA logging failed: ' . $e->getMessage(), Log::WARNING, 'plg_captcha_recaptcha_enterprise');
+		}
+	}
+
+	/**
+	 * Prunes the log table to stay within configured retention limits.
+	 *
+	 * Deletes rows older than the configured number of days, then trims
+	 * excess rows beyond the configured maximum count (oldest first).
+	 *
+	 * @param   DatabaseInterface  $db  Database driver instance.
+	 *
+	 * @return  void
+	 *
+	 * @since   2.1.0
+	 */
+	private function pruneLog(DatabaseInterface $db): void
+	{
+		$maxDays = (int) $this->params->get('logRetentionDays', 45);
+		$maxRows = (int) $this->params->get('logMaxRows', 1000);
+
+		// Delete entries older than retention period.
+		if ($maxDays > 0)
+		{
+			$cutoff = Factory::getDate('now - ' . $maxDays . ' days')->toSql();
+			$query = $db->getQuery(true)
+				->delete($db->quoteName('#__recaptcha_enterprise_log'))
+				->where($db->quoteName('log_date') . ' < ' . $db->quote($cutoff));
+			$db->setQuery($query)->execute();
+		}
+
+		// Trim to max row count (keep newest).
+		if ($maxRows > 0)
+		{
+			$countQuery = $db->getQuery(true)
+				->select('COUNT(*)')
+				->from($db->quoteName('#__recaptcha_enterprise_log'));
+			$total = (int) $db->setQuery($countQuery)->loadResult();
+
+			if ($total > $maxRows)
+			{
+				// Find the ID threshold: keep only the newest $maxRows rows.
+				$idQuery = $db->getQuery(true)
+					->select($db->quoteName('id'))
+					->from($db->quoteName('#__recaptcha_enterprise_log'))
+					->order($db->quoteName('id') . ' DESC');
+				$minKeepId = (int) $db->setQuery($idQuery, $maxRows - 1, 1)->loadResult();
+
+				if ($minKeepId > 0)
+				{
+					$deleteQuery = $db->getQuery(true)
+						->delete($db->quoteName('#__recaptcha_enterprise_log'))
+						->where($db->quoteName('id') . ' < ' . (int) $minKeepId);
+					$db->setQuery($deleteQuery)->execute();
+				}
+			}
 		}
 	}
 
