@@ -28,4 +28,9 @@
 		<type>plugin</type>
 		<version>2.0.5-lazyload</version>
 	</changelog>
+	<changelog>
+		<element>recaptcha_enterprise</element>
+		<type>plugin</type>
+		<version>2.0.7</version>
+	</changelog>
 </changelogs>

@@ -53,7 +53,7 @@ final class Plugin implements PluginInterface
 	 * @var	 string
 	 * @since  1.0.0
 	 */
-	private const SCRIPT_HASH = 'b310f90e';
+	private const SCRIPT_HASH = '27f4e466';
 
 	/**
 	 * Application instance.
