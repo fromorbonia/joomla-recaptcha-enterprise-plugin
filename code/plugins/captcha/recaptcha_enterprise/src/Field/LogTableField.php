@@ -127,13 +127,14 @@ final class LogTableField extends FormField
 		$baseUri->delVar('recaptcha_log_page');
 
 		// Build HTML.
-		$html = '<div class="recaptcha-log-viewer">';
+		$html = '<div class="recaptcha-log-viewer" id="recaptcha-log-viewer">';
 		$html .= $this->renderFilters($filterResult, $filterIp, $filterAction, $baseUri);
 		$html .= $this->renderSummary($total, $page, $totalPages);
 		$html .= $this->renderTable($rows);
 		$html .= $this->renderPagination($page, $totalPages, $baseUri);
 		$html .= $this->renderClearButton($baseUri);
 		$html .= '</div>';
+		$html .= $this->renderScript();
 
 		return $html;
 	}
@@ -167,26 +168,20 @@ final class LogTableField extends FormField
 		$lang = Factory::getApplication()->getLanguage();
 		$lang->load('plg_captcha_recaptcha_enterprise', JPATH_ADMINISTRATOR);
 
-		$html  = '<div class="recaptcha-log-filters mb-3 p-3 bg-light border rounded">';
-		$html .= '<form method="get" class="row g-2 align-items-end">';
+		// Build filter URL base (strip existing filter params so they can be re-added).
+		$filterBaseUri = clone $baseUri;
+		$filterBaseUri->delVar('recaptcha_log_filter_result');
+		$filterBaseUri->delVar('recaptcha_log_filter_ip');
+		$filterBaseUri->delVar('recaptcha_log_filter_action');
+		$filterBaseUrl = $filterBaseUri->toString();
 
-		// Preserve all existing query params as hidden fields.
-		$uri = Uri::getInstance();
-
-		foreach ($uri->getQuery(true) as $key => $value)
-		{
-			if (strpos($key, 'recaptcha_log_') === 0)
-			{
-				continue;
-			}
-
-			$html .= '<input type="hidden" name="' . $this->escape($key) . '" value="' . $this->escape($value) . '">';
-		}
+		$html  = '<div class="recaptcha-log-filters mb-3 p-3 bg-light border rounded" data-filter-base-url="' . $this->escape($filterBaseUrl) . '">';
+		$html .= '<div class="row g-2 align-items-end">';
 
 		// Result filter.
 		$html .= '<div class="col-auto">';
 		$html .= '<label class="form-label fw-bold">' . Text::_('PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_LOG_RESULT') . '</label>';
-		$html .= '<select name="recaptcha_log_filter_result" class="form-select form-select-sm">';
+		$html .= '<select id="recaptcha_log_filter_result" class="form-select form-select-sm">';
 		$html .= '<option value="">' . Text::_('JALL') . '</option>';
 
 		foreach (['pass', 'fail', 'error'] as $opt)
@@ -200,31 +195,103 @@ final class LogTableField extends FormField
 		// IP filter.
 		$html .= '<div class="col-auto">';
 		$html .= '<label class="form-label fw-bold">' . Text::_('PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_LOG_IP_ADDRESS') . '</label>';
-		$html .= '<input type="text" name="recaptcha_log_filter_ip" value="' . $this->escape($filterIp) . '" class="form-control form-control-sm" placeholder="e.g. 192.168.1.1">';
+		$html .= '<input type="text" id="recaptcha_log_filter_ip" value="' . $this->escape($filterIp) . '" class="form-control form-control-sm" placeholder="e.g. 192.168.1.1">';
 		$html .= '</div>';
 
 		// Action filter.
 		$html .= '<div class="col-auto">';
 		$html .= '<label class="form-label fw-bold">' . Text::_('PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_LOG_ACTION') . '</label>';
-		$html .= '<input type="text" name="recaptcha_log_filter_action" value="' . $this->escape($filterAction) . '" class="form-control form-control-sm" placeholder="e.g. login">';
+		$html .= '<input type="text" id="recaptcha_log_filter_action" value="' . $this->escape($filterAction) . '" class="form-control form-control-sm" placeholder="e.g. login">';
 		$html .= '</div>';
 
 		// Buttons.
 		$html .= '<div class="col-auto">';
-		$html .= '<button type="submit" class="btn btn-sm btn-primary">' . Text::_('JSEARCH_FILTER_SUBMIT') . '</button>';
+		$html .= '<button type="button" id="recaptcha_log_filter_submit" class="btn btn-sm btn-primary">' . Text::_('JSEARCH_FILTER_SUBMIT') . '</button>';
 
-		$clearUri = clone $baseUri;
-		$clearUri->delVar('recaptcha_log_filter_result');
-		$clearUri->delVar('recaptcha_log_filter_ip');
-		$clearUri->delVar('recaptcha_log_filter_action');
+		$clearUri = clone $filterBaseUri;
 
 		$html .= ' <a href="' . $clearUri->toString() . '" class="btn btn-sm btn-secondary">' . Text::_('JSEARCH_FILTER_CLEAR') . '</a>';
 		$html .= '</div>';
 
-		$html .= '</form>';
+		$html .= '</div>';
 		$html .= '</div>';
 
 		return $html;
+	}
+
+	/**
+	 * Render the single script block that handles all AJAX interactions.
+	 */
+	private function renderScript(): string
+	{
+		return <<<'JS'
+<script>
+(function() {
+	var viewer = document.getElementById("recaptcha-log-viewer");
+	if (!viewer) return;
+
+	function fetchAndReplace(url) {
+		fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}})
+			.then(function(r) { return r.text(); })
+			.then(function(html) {
+				var tmp = document.createElement("div");
+				tmp.innerHTML = html;
+				var fresh = tmp.querySelector("#recaptcha-log-viewer");
+				if (fresh) {
+					viewer.innerHTML = fresh.innerHTML;
+				}
+			});
+	}
+
+	viewer.addEventListener("click", function(e) {
+		// Filter submit button.
+		var btn = e.target.closest("#recaptcha_log_filter_submit");
+		if (btn) {
+			e.preventDefault();
+			var filtersDiv = viewer.querySelector(".recaptcha-log-filters");
+			var base = filtersDiv ? filtersDiv.dataset.filterBaseUrl : window.location.href;
+			var url = new URL(base, window.location.origin);
+			var r = viewer.querySelector("#recaptcha_log_filter_result");
+			var ip = viewer.querySelector("#recaptcha_log_filter_ip");
+			var a = viewer.querySelector("#recaptcha_log_filter_action");
+			if (r && r.value) url.searchParams.set("recaptcha_log_filter_result", r.value);
+			if (ip && ip.value) url.searchParams.set("recaptcha_log_filter_ip", ip.value);
+			if (a && a.value) url.searchParams.set("recaptcha_log_filter_action", a.value);
+			fetchAndReplace(url.toString());
+			return;
+		}
+
+		// Pagination links and Clear-filters link.
+		var link = e.target.closest("a.page-link, a.btn-secondary");
+		if (link && viewer.contains(link)) {
+			e.preventDefault();
+			fetchAndReplace(link.href);
+			return;
+		}
+
+		// Clear log button.
+		var clearBtn = e.target.closest("a.btn-danger");
+		if (clearBtn && viewer.contains(clearBtn)) {
+			e.preventDefault();
+			var msg = clearBtn.dataset.confirm || "Are you sure?";
+			if (confirm(msg)) {
+				fetchAndReplace(clearBtn.href);
+			}
+			return;
+		}
+	});
+
+	// Allow Enter key in filter inputs to trigger search.
+	viewer.addEventListener("keydown", function(e) {
+		if (e.key === "Enter" && e.target.closest("#recaptcha_log_filter_ip, #recaptcha_log_filter_action")) {
+			e.preventDefault();
+			var btn = viewer.querySelector("#recaptcha_log_filter_submit");
+			if (btn) btn.click();
+		}
+	});
+})();
+</script>
+JS;
 	}
 
 	/**
@@ -411,7 +478,7 @@ final class LogTableField extends FormField
 		$clearUri->setVar(Factory::getApplication()->getSession()->getFormToken(), '1');
 
 		return '<div class="mt-3 text-end">'
-			. '<a href="' . $clearUri->toString() . '" class="btn btn-danger btn-sm" onclick="return confirm(\'' . Text::_('PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_LOG_CLEAR_CONFIRM', true) . '\')">'
+			. '<a href="' . $clearUri->toString() . '" class="btn btn-danger btn-sm" data-confirm="' . $this->escape(Text::_('PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_LOG_CLEAR_CONFIRM')) . '">'
 			. '<span class="icon-trash" aria-hidden="true"></span> '
 			. Text::_('PLG_CAPTCHA_RECAPTCHA_ENTERPRISE_LOG_CLEAR')
 			. '</a></div>';

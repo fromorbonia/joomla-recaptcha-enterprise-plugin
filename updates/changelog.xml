@@ -23,4 +23,9 @@
 		<type>plugin</type>
 		<version>2.0.5-upd</version>
 	</changelog>
+	<changelog>
+		<element>recaptcha_enterprise</element>
+		<type>plugin</type>
+		<version>2.0.6</version>
+	</changelog>
 </changelogs>
