@@ -120,7 +120,10 @@ const observerCallback = (mutations, observer) => {
 /**
  * Initialise a captcha field inside the given container element.
  * Called by onDisplay's inline script so that dynamically loaded
- * forms (popups, AJAX) get a token immediately.
+ * forms (popups, AJAX) get a token at that point, not on the 
+ * initial page load. This is important when the form is configured
+ * on inital page load, but might never be called as you don't want
+ * the Captcha logo to appear all the time. 
  *
  * @param {HTMLElement} container  The element that wraps the hidden inputs.
  */
