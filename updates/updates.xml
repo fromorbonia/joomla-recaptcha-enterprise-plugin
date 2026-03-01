@@ -9,14 +9,14 @@
 		<client>site</client>
 		<maintainer>FromOrbonia</maintainer>
 		<maintainerurl>https://github.com/FromOrbonia/joomla-recaptcha-enterprise-plugin</maintainerurl>
-		<version>2.0.6</version>
+		<version>2.0.5-lazyload</version>
 		<downloads>
-			<downloadurl type="full" format="zip">https://github.com/FromOrbonia/joomla-recaptcha-enterprise-plugin/releases/download/2.0.6/plg_captcha_recaptcha_enterprise-2.0.6.zip</downloadurl>
+			<downloadurl type="full" format="zip">https://github.com/FromOrbonia/joomla-recaptcha-enterprise-plugin/releases/download/2.0.5-lazyload/plg_captcha_recaptcha_enterprise-2.0.5-lazyload.zip</downloadurl>
 		</downloads>
-		<sha512>55068224377935bdc1b4fc7a00922f9831d9237413fe5bdafaf9ef8119c8956475970c6726a734c8c39dc0d4c21f95485e89738f70f28ee591c631d823d7fb8e</sha512>
-		<sha384>2f37b2c94def5d0de332ab88588c3f7c222ecd8e431ad4534b8db66fe19545b8743f88edac04b4b37cd64d53cd1115a9</sha384>
-		<sha256>58ab66ec8547a64ea81ae437d409a3808b4e55fa292ce06b3096b3b62efb68a5</sha256>
-		<infourl title="Captcha - reCAPTCHA Enterprise">https://github.com/FromOrbonia/joomla-recaptcha-enterprise-plugin/releases/tag/2.0.6</infourl>
+		<sha512>6cc0f4d7aa6be66caf3c244495446c32ffafee614f6e1d6c0178d5baf9488556b5601cf9d0e5e21054e0abade00d0085c5eeb494a38f2f770bbcd4db7c37152c</sha512>
+		<sha384>dc28afcba43cc986aec9d11d9e70e860f61607fabc775eed7e7c430f77adae77bcb44c57d30362bcd3e04a6a2f481d05</sha384>
+		<sha256>75c3b6c4411b140016337810b9b799931d8928b5020a76b9d08fb1be354c838d</sha256>
+		<infourl title="Captcha - reCAPTCHA Enterprise">https://github.com/FromOrbonia/joomla-recaptcha-enterprise-plugin/releases/tag/2.0.5-lazyload</infourl>
 		<changelogurl>https://raw.githubusercontent.com/FromOrbonia/joomla-recaptcha-enterprise-plugin/main/updates/changelog.xml</changelogurl>
 		<targetplatform name="joomla" version="(6\.|5\.|4\.)"/>
 		<php_minimum>7.2.5</php_minimum>
