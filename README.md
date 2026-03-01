@@ -12,25 +12,29 @@
   - For small sites trying to stop spammers I think this is essential to log
   - Your privacy policy should already mention IP logging for security
 
-## Enable Captcha on your site
-- Install this extension
-- Goto System → Global Configuration → Site → Default Captcha
-  - Select "reCAPTCHA Enterprise"
-- Goto Users → Manage → Options
-  - Select "Use global default" or "reCAPTCHA Enterprise"
-
 ## Setup Google ReCaptcha
 - Create a GCP account, or login to [Google Cloud Console](https://console.cloud.google.com/) 
 - Create a project if you haven't already
 - Navigate to [reCapthca in the Security](https://console.cloud.google.com/security/recaptcha/) section
-- Create reCAPTCHA Enterprise keys to get your site key
+- Create reCAPTCHA Enterprise keys (scores based) to get your site key
 - Navigate to [Credentials in the API section](https://console.cloud.google.com/apis/credentials) to create an API key
+  - Restrict it to the reCAPTCHA Enterprise API
 
-## Setup and configure plugin options
-1. Create a Google Cloud project and enable the reCAPTCHA Enterprise API.
-2. Create a reCAPTCHA Enterprise site key (score-based / Enterprise type) in the Cloud Console.
-3. Create an API key in the Cloud Console (restrict it to the reCAPTCHA Enterprise API).
-4. In the Joomla plugin settings, enter: **Site Key**, **API Key**, and **Project ID**.
+
+## Enable Captcha on your site
+- Install this extension
+- Using the information from the GCP console set:
+  - **Site Key**
+  - **API Key**
+  - **Project ID**
+- Enable database logging if you want to
+- Enable the extenstion
+- Goto System → Global Configuration → Site → Default Captcha
+  - Select "reCAPTCHA Enterprise"
+- Goto Users → Manage → Options
+  - Select "Use global default" or "reCAPTCHA Enterprise"
+- Test it on a registration form on your site!
+
 
 ## System Requirements
 - Joomla! 4.0 or higher
